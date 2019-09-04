@@ -1,0 +1,102 @@
+---
+# Playbook to add a new vlan to an NX-OS distribution switch
+#
+# The following variables are expected to be provided on the ansible-playbook
+# command-line using the -e option:
+#
+# extr_downlink_key (tasks will execute only on inventory hosts that have
+# a matching name in their 'downlinks' list)
+# extr_vlan_id (the numerical vlan id to add)
+# extr_vlan_descr (a textual description of the vlan; has to be a valid
+# vlan name on the device)
+
+- hosts: distribution_switches
+  
+  pre_tasks:
+    - debug:
+        msg: "{{ hostvars[inventory_hostname]['ospf_instance'] }}"
+      delegate_to: localhost
+    
+  vars:
+
+    extr_vars_supplied: "{{
+    (extr_downlink_key is defined) and \
+    (extr_vlan_id is defined) and \
+    (extr_vlan_descr is defined) \
+    }}"
+    
+    applicable: "{{
+    (extr_vars_supplied) and \
+    extr_downlink_key in hostvars[inventory_hostname]['downlinks']
+    }}"
+    
+  gather_facts: no
+  
+  tasks:
+    - name: Ensure SVI does not already exist (delete it if it does)
+      vars:
+        ifname: "Vlan{{ extr_vlan_id }}"
+      nxos_interface:
+        name: "{{ ifname }}"
+        state: absent
+      when: applicable
+        
+    - name: Ensure vlan does not already exist (delete it if it does)
+      nxos_vlan:
+        vlan_id: "{{ extr_vlan_id }}"
+        state: absent
+      when: applicable
+      
+    - name: Ensure OSPF instance exists (create it if it doesn't)
+      nxos_ospf:
+        ospf: "{{ hostvars[inventory_hostname]['ospf_instance'] }}"
+        state: present
+      when: applicable
+
+    - name: Create the vlan
+      nxos_vlan:
+        vlan_id: "{{ extr_vlan_id }}"
+        name: "{{ extr_vlan_descr }}"
+        vlan_state: active
+        admin_state: up
+        state: present
+      when: applicable
+
+    - name: Ensure downlink interface is an L2 trunk, and is trunking the new vlan
+      vars:
+        ifname: "{{ hostvars[inventory_hostname]['downlinks'][extr_downlink_key] }}"
+      nxos_l2_interface:
+        name: "{{ ifname }}"
+        mode: trunk
+        trunk_vlans: "{{ extr_vlan_id }}"
+        state: present
+      when: applicable
+
+    - name: Create the SVI
+      vars:
+        ifname: "Vlan{{ extr_vlan_id }}"
+      nxos_interface:
+        name: "{{ ifname }}"
+        admin_state: 'up'
+        description: "L3 gateway SVI for {{ extr_vlan_descr }}"
+        state: present
+      when: applicable
+      
+    - name: Assign IPv4 address to the SVI
+      vars:
+        ifname: "Vlan{{ extr_vlan_id }}"
+      nxos_l3_interface:
+        name: "{{ ifname }}"
+        ipv4: "{{ hostvars[inventory_hostname]['ipv4_subnet'] }}{{ extr_vlan_id }}.1/24"
+        state: present
+      when: applicable
+
+    - name: Add the newly created network in OSPF
+      vars:
+        ifname: "Vlan{{ extr_vlan_id }}"
+      nxos_interface_ospf:
+        interface: "{{ ifname }}"
+        ospf: "{{ hostvars[inventory_hostname]['ospf_instance'] }}"
+        area: "{{ hostvars[inventory_hostname]['ospf_area'] }}"
+        state: present
+      when: applicable

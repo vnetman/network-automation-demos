@@ -1,0 +1,14 @@
+---
+ansible_host:            sbx-nxos-mgmt.cisco.com
+ansible_connection:      network_cli
+ansible_network_os:      nxos
+ansible_port:            8181
+ansible_user:            admin
+ansible_ssh_pass:        Admin_1234!
+ansible_ssh_common_args: '-o PasswordAuthentication=yes -o PubkeyAuthentication=no -o ServerAliveInterval=13 -o StrictHostKeyChecking=no'
+
+downlinks:
+  2nd_floor_dev_lab:  'Ethernet1/31'
+  2nd_floor_prod_lab: 'Ethernet1/32'
+  2nd_floor_vendor:   'Ethernet1/33'
+  3rd_floor_vendor:   'Ethernet1/34'

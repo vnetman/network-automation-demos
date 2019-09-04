@@ -1,0 +1,4 @@
+---
+ipv4_subnet: '10.19.'
+ospf_instance: 'ospf_dist_router'
+ospf_area: 23
