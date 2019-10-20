@@ -1,7 +1,7 @@
 # network-automation-demos
 Demonstration code for performing a specific network modification using different Network Automation techniques.
 
-This is the companion GitHub repository for the Network Automation article I wrote at (link coming soon). The article takes a specific, simple Enterprise network task - adding a new VLAN in a distribution switch and configuring various related L2/L3 parameters related to this new VLAN - and then explains how that specific task can be automated using different automation software tools.
+This is the companion GitHub repository for the [Network Automation article I wrote](https://vnetman.github.io/network-automation/netconf/yang/ansible/chef/puppet/netmiko/python/2019/10/18/network-automation-a-1000ft-view.html). The article takes a specific, simple Enterprise network task - adding a new VLAN in a distribution switch and configuring various related L2/L3 parameters related to this new VLAN - and then explains how that specific task can be automated using different automation software tools.
 
 ## Netmiko
 
